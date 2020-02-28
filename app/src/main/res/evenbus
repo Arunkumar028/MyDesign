@@ -1,0 +1,45 @@
+
+Evenbus
+
+  private void TripHistoryDetails(String username) {
+        ApiService apiService = RegApiClient.getClient().create(ApiService.class);
+        String apikey = "26345dc063dd31b350432a6596c92e6e";
+        String action = "GetTaskCount";
+        MyGroupData myGroupData = new MyGroupData(username);
+        retrofit2.Call<GetNaviListCountResponce> call = apiService.navilist(new NaviListrequest(apikey, action, myGroupData));
+        call.enqueue(new Callback<GetNaviListCountResponce>() {
+            @Override
+            public void onResponse(retrofit2.Call<GetNaviListCountResponce> call, Response<GetNaviListCountResponce> response) {
+                if (response.isSuccessful()) {
+                    if (response.body().getStatus().equals("Success")) {
+                        reclosetaskno = response.body().getOutputdata().getGetMyGroupRecentTaskCount();
+                        closetaskno = response.body().getOutputdata().getGetMyGroupTaskCount();
+                        personalclose = response.body().getOutputdata().getGetMyPersonalClosedCount();
+                        personalopen = response.body().getOutputdata().getGetMyPersonalTaskCount();
+                        opentaskno = response.body().getOutputdata().getGetMyOpenTasksCount();
+                        recenttask = response.body().getOutputdata().getGetMyRecentTasksCount();
+                        EventBus.getDefault().post(response.body());
+                    }
+}}}
+
+
+ @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onMessageEvent(Object response) {
+        if (response instanceof GetNaviListCountResponce) {
+            GetNaviListCountResponce responseData = (GetNaviListCountResponce) response;
+            mainmethod(responseData);
+
+        }
+    }
+
+    private void mainmethod(GetNaviListCountResponce responseData) {
+        reclosetaskno = responseData.getOutputdata().getGetMyGroupRecentTaskCount();
+        closetaskno = responseData.getOutputdata().getGetMyGroupTaskCount();
+        personalclose = responseData.getOutputdata().getGetMyPersonalClosedCount();
+        personalopen = responseData.getOutputdata().getGetMyPersonalTaskCount();
+        opentaskno = responseData.getOutputdata().getGetMyOpenTasksCount();
+        recenttask = responseData.getOutputdata().getGetMyRecentTasksCount();
+        newarrival = responseData.getOutputdata().getGetMyNewArrivalsCount();
+        String add = "( ";
+        String add1 = " )";
+        }

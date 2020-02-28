@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+
+    <item android:top="00dp"
+        android:bottom="00dp"
+        android:left="00dp"
+        android:right="00dp">
+        <rotate
+            android:fromDegrees="0"
+            android:pivotX="0%"
+            android:pivotY="00%">
+            <shape
+                android:shape="rectangle">
+                <solid
+                    android:color="#fff"
+                    />
+
+            </shape>
+        </rotate>
+    </item>
+
+
+
+    <item android:top="-100dp"
+        android:bottom="-150dp"
+        android:left="-250dp"
+        android:right="-250dp">
+        <rotate
+            android:fromDegrees="-10"
+            android:pivotX="-10%"
+            android:toDegrees="1"
+            android:pivotY="-55%">
+            <shape
+                android:shape="oval">
+                <solid
+                    android:color="#FF6E22FF"/>
+            </shape>
+        </rotate>
+    </item>
+
+    <!--<item android:top="-150dp"-->
+        <!--android:bottom="-40dp"-->
+        <!--android:left="-250dp"-->
+        <!--android:right="-250dp">-->
+        <!--<rotate-->
+            <!--android:fromDegrees="-12"-->
+            <!--android:pivotX="0%"-->
+            <!--android:toDegrees="-17"-->
+            <!--android:pivotY="100%">-->
+            <!--<shape-->
+                <!--android:shape="oval">-->
+                <!--<solid-->
+                    <!--android:color="#C15C1ADD"/>-->
+            <!--</shape>-->
+        <!--</rotate>-->
+    <!--</item>-->
+
+    <!--<item android:top="-130dp"-->
+        <!--android:bottom="-20dp"-->
+        <!--android:left="-250dp"-->
+        <!--android:right="-250dp">-->
+        <!--<rotate-->
+            <!--android:fromDegrees="-12"-->
+            <!--android:pivotX="0%"-->
+            <!--android:toDegrees="-17"-->
+            <!--android:pivotY="100%">-->
+            <!--<shape-->
+                <!--android:shape="oval">-->
+                <!--<solid-->
+                    <!--android:color="@color/colorAccent"/>-->
+            <!--</shape>-->
+        <!--</rotate>-->
+    <!--</item>-->
+
+</layer-list>

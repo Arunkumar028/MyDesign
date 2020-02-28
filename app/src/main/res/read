@@ -1,0 +1,701 @@
+package com.kgisl.helpdesk.activity;
+
+import android.Manifest;
+import android.annotation.TargetApi;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.support.design.widget.BottomSheetDialog;
+import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.content.FileProvider;
+import android.support.v7.app.AppCompatActivity;
+
+import android.support.v7.widget.AppCompatButton;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.annotation.RequiresApi;
+
+import com.airbnb.lottie.LottieAnimationView;
+import com.bumptech.glide.Glide;
+import com.google.gson.Gson;
+import com.kgisl.helpdesk.BuildConfig;
+import com.kgisl.helpdesk.FileSaveUtil;
+import com.kgisl.helpdesk.R;
+import com.kgisl.helpdesk.Request.Data;
+import com.kgisl.helpdesk.Request.MyPersonalinfReq;
+import com.kgisl.helpdesk.Request.PersoanlListReq2;
+import com.kgisl.helpdesk.Request.PersonalDataRequest;
+import com.kgisl.helpdesk.Request.UpdateLogRequest;
+import com.kgisl.helpdesk.RequestData.MyUpdateData;
+import com.kgisl.helpdesk.RequestData.PersonData;
+import com.kgisl.helpdesk.Responce.GetPersonInfResponce;
+import com.kgisl.helpdesk.Responce.GetPersonalListResponce;
+import com.kgisl.helpdesk.Responce.GetUpdateLogResponce;
+import com.kgisl.helpdesk.Service.ApiService;
+import com.kgisl.helpdesk.Service.RegApiClient;
+import com.kgisl.helpdesk.adapter.UpdateUserLog;
+import com.kgisl.helpdesk.ui.BottomSheetBehaviorRecyclerManager;
+import com.kgisl.helpdesk.ui.BottomSheetBehavior_v27;
+import com.kgisl.helpdesk.ui.BottomSheetDialog_v25;
+import com.kgisl.helpdesk.utils.Config;
+import com.kgisl.helpdesk.utils.FilePathUtil;
+import com.kgisl.helpdesk.utils.PrefUtils;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
+import okhttp3.ResponseBody;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+
+public class DisplayPersonlActivity extends AppCompatActivity {
+    private File file;
+    private UpdateUserLog outputdatalog;
+    @BindView(R.id.parent)
+    CoordinatorLayout mParent;
+    @BindView(R.id.progressBar1)
+    ProgressBar progressBar1;
+    @BindView(R.id.taskopen)
+    TextView taskopen;
+    @BindView(R.id.taskcatagory)
+    TextView category;
+    @BindView(R.id.taskstaus)
+    TextView taskmanager;
+    @BindView(R.id.taskmanager)
+    TextView taskstatus1;
+    @BindView(R.id.tasknamehead)
+    TextView tasknamehead;
+    @BindView(R.id.floorno)
+    TextView floorno;
+    @BindView(R.id.shortdesc)
+    TextView shortdesc;
+    @BindView(R.id.detaildesc)
+    TextView detaildesc;
+    @BindView(R.id.cabinno)
+    TextView cabinno;
+    @BindView(R.id.depform)
+    TextView depform;
+    @BindView(R.id.headdep)
+    TextView headdep;
+    @BindView(R.id.bulidname)
+    TextView bulidname;
+    @BindView(R.id.lastdate)
+    TextView lastdate;
+    @BindView(R.id.mainvisible)
+    LinearLayout mainvisible;
+    @BindView(R.id.animation_view_load)
+    LottieAnimationView animationview;
+    @BindView(R.id.cbShowPwd)
+    CheckBox checkbox;
+    @BindView(R.id.checkvalue)
+    EditText checkvalue;
+    @BindView(R.id.submit)
+    Button submit;
+    @BindView(R.id.emailtext)
+    EditText emailtext;
+    @BindView(R.id.carban)
+    EditText carban;
+    @BindView(R.id.Viewdesc)
+    TextView viewdesc;
+    @BindView(R.id.filesattached)
+    AppCompatButton filesattached;
+    @BindView(R.id.filechoose)
+    TextView filechoose;
+    @BindView(R.id.profileimg)
+    ImageView profileUpload;
+    SharedPreferences sharedpreferences;
+    public static final String MY_PREFS_NAME = "MyPrefsFile";
+    String groupid, user, ticketno, approval = "", mark, wait = "Y", email_msg = "", carboncopy, full1, short1, emailPattern;
+    boolean isNetConnected = false;
+    private static final int FROM_CAMERA = 1;
+    private static final int FROM_GALLERY = 2;
+    public Context context;
+    private String camPicPath;
+    LinearLayout camera, gallery;
+    public static final String MULTIPART_FORM_DATA = "multipart/form-data";
+    public String picPath = "";
+    private int serverResponseCode = 0;
+    private String upLoadServerUri = null;
+    List<String> filePathList = new ArrayList<>();
+    String timestamp, filename;
+    BottomSheetDialog mBottomSheetDialog;
+    String path;
+    private static final int PERMISSION_REQUEST_CODE = 200;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_display_personl);
+        ButterKnife.bind(this);
+        this.setTitle("Personal Task");
+        statusCheck();
+        Long tsLong = System.currentTimeMillis() / 1000;
+        timestamp = tsLong.toString();
+
+        upLoadServerUri = "http://helpdesk.kgisl.com/helpdesk_api/UAT/attachments";
+        sharedpreferences = getSharedPreferences(MY_PREFS_NAME, Context.MODE_PRIVATE);
+        user = sharedpreferences.getString(Config.username, " ");
+        ticketno = getIntent().getExtras().getString("extra", " ");
+        tasknamehead.setText(ticketno);
+        Pesonallist(ticketno);
+        TextView viewlog = (TextView) findViewById(R.id.ViewLog);
+
+        viewdesc.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                final BottomSheetDialog mBottomSheetDialog = new BottomSheetDialog(DisplayPersonlActivity.this);
+                View sheetView = getLayoutInflater().inflate(R.layout.include_desc, null);
+                mBottomSheetDialog.setContentView(sheetView);
+                mBottomSheetDialog.show();
+                TextView shortdesc = (TextView) mBottomSheetDialog.findViewById(R.id.shortdesc);
+                TextView detaildesc = (TextView) mBottomSheetDialog.findViewById(R.id.detailsdesc);
+                shortdesc.setText(short1);
+                detaildesc.setText(full1);
+
+                FloatingActionButton close = (FloatingActionButton) mBottomSheetDialog.findViewById(R.id.close);
+                close.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        mBottomSheetDialog.dismiss();
+                    }
+                });
+            }
+        });
+
+
+        viewlog.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                final BottomSheetDialog_v25 bottomSheetDialog = new BottomSheetDialog_v25(DisplayPersonlActivity.this);
+                View dialogSheetView = getLayoutInflater().inflate(R.layout.bottom_sheet_layout_main, null);
+                bottomSheetDialog.setContentView(dialogSheetView);
+                bottomSheetDialog.show();
+                final RecyclerView mBottomSheetRecyclerLeft = (RecyclerView) dialogSheetView.findViewById(R.id.btm_recyclerview_left);
+                LinearLayoutManager mLayoutManagerLeft = new LinearLayoutManager(getApplicationContext());
+                mBottomSheetRecyclerLeft.setLayoutManager(mLayoutManagerLeft);
+                FloatingActionButton fab = (FloatingActionButton) dialogSheetView.findViewById(R.id.fab);
+
+
+                fab.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        bottomSheetDialog.dismiss();
+                    }
+                });
+                bottomSheetDialog.setCancelable(true);
+                bottomSheetDialog.setCanceledOnTouchOutside(true);
+                bottomSheetDialog.getBehavior().setPeekHeight(150);
+                bottomSheetDialog.getBehavior().setState(BottomSheetBehavior_v27.STATE_COLLAPSED);
+
+                BottomSheetBehaviorRecyclerManager manager = new BottomSheetBehaviorRecyclerManager(mParent, bottomSheetDialog.getBehavior(), bottomSheetDialog.getBottomSheetView());
+                manager.addControl(mBottomSheetRecyclerLeft);
+                manager.create();
+                ApiService apiService = RegApiClient.getClient().create(ApiService.class);
+                String apikey = "26345dc063dd31b350432a6596c92e6e";
+                String action = "Getupdate_log";
+                MyUpdateData myUpdateData = new MyUpdateData(ticketno);
+                retrofit2.Call<GetUpdateLogResponce> call = apiService.myupdatelog(new UpdateLogRequest(apikey, action, myUpdateData));
+                call.enqueue(new Callback<GetUpdateLogResponce>() {
+                    @Override
+                    public void onResponse(retrofit2.Call<GetUpdateLogResponce> call, Response<GetUpdateLogResponce> response) {
+                        if (response.isSuccessful()) {
+                            if (response.body().getStatus().equals("Success")) {
+                                outputdatalog = new UpdateUserLog(getApplicationContext(), response.body().getOutputdata());
+                                mBottomSheetRecyclerLeft.setAdapter(outputdatalog);
+
+                            } else {
+                                // Toast.makeText(DisplayPersonlActivity.this, "false", Toast.LENGTH_SHORT).show();
+                            }
+
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(retrofit2.Call<GetUpdateLogResponce> call, Throwable t) {
+                        if (t instanceof IOException) {
+                            Toast.makeText(getApplicationContext(), "API Service error 401", Toast.LENGTH_SHORT).show();
+
+                        } else {
+                            Toast.makeText(getApplicationContext(), "Internet connection error,Please try again", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+            }
+        });
+        checkbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (!isChecked) {
+                    checkvalue.setVisibility(View.GONE);
+                } else {
+                    checkvalue.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+
+
+    }
+
+    public void statusCheck() {
+        IntentFilter internetlocalFilter = new IntentFilter();
+        internetlocalFilter.addAction("android.net.conn.CONNECTIVITY_CHANGE");
+        registerReceiver(internetLocalReceiver, internetlocalFilter);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        statusCheck();
+    }
+
+    @Override
+    public void onPause() {
+        unregisterReceiver(internetLocalReceiver);
+        super.onPause();
+    }
+
+    public BroadcastReceiver internetLocalReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.v("INternet", "Receieved notification about network status");
+            isNetworkAvailable(context);
+        }
+    };
+
+    private boolean isNetworkAvailable(Context context) {
+        ConnectivityManager connectivity = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (connectivity != null) {
+            NetworkInfo[] info = connectivity.getAllNetworkInfo();
+            if (info != null) {
+                for (int i = 0; i < info.length; i++) {
+                    if (info[i].getState() == NetworkInfo.State.CONNECTED) {
+                        if (!isNetConnected) {
+                            Log.v("", "Now you are connected to Internet!");
+                            isNetConnected = true;
+                            isInternetToast(isNetConnected);
+                        }
+                        return true;
+                    }
+                }
+            }
+        }
+        Log.v("", "You are not connected to Internet!");
+        isNetConnected = false;
+        isInternetToast(isNetConnected);
+        return false;
+    }
+
+    public void isInternetToast(boolean isConnected) {
+        if (!isConnected) {
+            Intent intent = new Intent(getApplicationContext(), InternetErrorActivity.class);
+            startActivity(intent);
+            finish();
+        }
+    }
+
+    private void Pesonallist(final String ticketno) {
+        final String apikey = "26345dc063dd31b350432a6596c92e6e";
+        String action = "GetMyPersonalTask2level";
+        MyUpdateData data = new MyUpdateData(ticketno);
+        ApiService apiService = RegApiClient.getClient().create(ApiService.class);
+        retrofit2.Call<GetPersonalListResponce> call = apiService.personallist2(new PersoanlListReq2(apikey, action, data));
+        call.enqueue(new Callback<GetPersonalListResponce>() {
+            @Override
+            public void onResponse(retrofit2.Call<GetPersonalListResponce> call, Response<GetPersonalListResponce> response) {
+                if (response.isSuccessful()) {
+                    if (response.body().getStatus().equals("Success")) {
+                        String taskopen1 = response.body().getOutputdata().getTaskOpened();
+                        String taskcategory1 = response.body().getOutputdata().getTaskCategory();
+                        String taskmanager1 = response.body().getOutputdata().getTaskManager();
+                        String taskstatus = response.body().getOutputdata().getTaskStatus();
+                        String cabno1 = response.body().getOutputdata().getCabinno();
+                        String foorno1 = response.body().getOutputdata().getFloorNo();
+                        String depform1 = response.body().getOutputdata().getDepartmentFrom();
+                        String headdep1 = response.body().getOutputdata().getHeadOfDepartment();
+                        String bulidno1 = response.body().getOutputdata().getBuildingName();
+                        String lastdate1 = response.body().getOutputdata().getLastupdate();
+                        short1 = response.body().getOutputdata().getShotDescription();
+                        full1 = response.body().getOutputdata().getDescription();
+                        mark = (String) response.body().getOutputdata().getMarkCc();
+                        groupid = (String) response.body().getOutputdata().getGroupid();
+                        taskopen.setText(String.valueOf(taskopen1));
+                        category.setText(taskcategory1);
+                        taskstatus1.setText(taskmanager1);
+                        taskmanager.setText(taskstatus);
+                        floorno.setText(foorno1);
+                        cabinno.setText(cabno1);
+                        depform.setText(depform1);
+                        headdep.setText(headdep1);
+                        bulidname.setText(bulidno1);
+                        lastdate.setText(lastdate1);
+                        shortdesc.setText(short1);
+                        detaildesc.setText(full1);
+                        mainvisible.setVisibility(View.VISIBLE);
+                        animationview.setVisibility(View.INVISIBLE);
+                    } else {
+                        Toast.makeText(getApplicationContext(), "Server not support please try again later", Toast.LENGTH_LONG).show();
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(retrofit2.Call<GetPersonalListResponce> call, Throwable t) {
+                if (t instanceof Exception) {
+                    //  Toast.makeText(DisplayPersonlActivity.this, "Api error", Toast.LENGTH_SHORT).show();
+                } else {
+                    //  Toast.makeText(DisplayPersonlActivity.this, "Internet error", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        submit.setOnClickListener(new View.OnClickListener() {
+            @TargetApi(Build.VERSION_CODES.O)
+            @RequiresApi(api = Build.VERSION_CODES.O)
+            @Override
+            public void onClick(View v) {
+                carboncopy = carban.getText().toString().trim();
+                if (emailtext.getText().toString().length() <= 2) {
+                    emailtext.setError("Please enter update log details");
+                } else if (carban.getText().toString().length() > 0) {
+                    if (android.util.Patterns.EMAIL_ADDRESS.matcher(carboncopy).matches()) {
+                        Updatemethod(filePathList);
+                    } else {
+                        byte[] encodeValue = android.util.Base64.encode(email_msg.getBytes(), android.util.Base64.DEFAULT);
+                        String encodestring = new String(encodeValue);
+                        carban.setError("Please enter valid email id");
+                        carban.requestFocus();
+                    }
+                } else {
+                    filesattached.setEnabled(true);
+                    Updatemethod(filePathList);
+                }
+            }
+        });
+    }
+
+    private void Updatemethod(final List<String> filePathList) {
+        progressBar1.setVisibility(View.VISIBLE);
+        email_msg = emailtext.getText().toString();
+        approval = checkvalue.getText().toString();
+        byte[] encodeValue = android.util.Base64.encode(email_msg.getBytes(), android.util.Base64.DEFAULT);
+        String encodestring = new String(encodeValue);
+        String apikey = "26345dc063dd31b350432a6596c92e6e";
+        String action = "MyPersonal_task_update";
+        PersonData data = new PersonData(user, ticketno, wait, approval, carboncopy, mark, encodestring, groupid);
+        ApiService apiService1 = RegApiClient.getClient().create(ApiService.class);
+        retrofit2.Call<GetPersonInfResponce> call1 = apiService1.personallist(new MyPersonalinfReq(apikey, action, data));
+        {
+            call1.enqueue(new Callback<GetPersonInfResponce>() {
+                @Override
+                public void onResponse(retrofit2.Call<GetPersonInfResponce> call, Response<GetPersonInfResponce> response) {
+                    if (response.isSuccessful()) {
+                        if (response.body().getStatus().equals("Success")) {
+                            progressBar1.setVisibility(View.GONE);
+                            if (!filePathList.isEmpty()) {
+                                requestUploadSurvey(filePathList);
+                            } else {
+                                Intent intent = new Intent(getApplicationContext(), BaseActivity.class);
+                                startActivity(intent);
+                                finish();
+                            }
+                        }
+                    }
+                }
+
+                @Override
+                public void onFailure(retrofit2.Call<GetPersonInfResponce> call, Throwable t) {
+                    progressBar1.setVisibility(View.GONE);
+                    if (t instanceof Exception) {
+//                        Toast.makeText(DisplayPersonlActivity.this, "Api error", Toast.LENGTH_SHORT).show();
+                    } else {
+//                        Toast.makeText(DisplayPersonlActivity.this, "Internet error", Toast.LENGTH_SHORT).show();
+                    }
+                    t.printStackTrace();
+                }
+            });
+        }
+    }
+
+    public void back(View view) {
+
+        finish();
+    }
+
+    @OnClick(R.id.filesattached)
+    public void onchoose() {
+
+
+        if (checkPermission()) {
+            //main logic or main code
+            showDialogImageUpload();
+            // . write your main code to execute, It will execute if the permission is already given.
+
+        } else {
+            requestPermission();
+        }
+    }
+
+
+    private void requestPermission() {
+        ActivityCompat.requestPermissions(this,
+                new String[]{Manifest.permission.CAMERA},
+                PERMISSION_REQUEST_CODE);
+        ActivityCompat.requestPermissions(this,
+                new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                PERMISSION_REQUEST_CODE);
+        ActivityCompat.requestPermissions(this,
+                new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                PERMISSION_REQUEST_CODE);
+    }
+
+    private boolean checkPermission() {
+
+        if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA)
+                != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions((DisplayPersonlActivity.this),
+                    new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE},
+                    200);
+
+
+/*            ActivityCompat.requestPermissions((Activity) getContext(),
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    201);
+
+            ActivityCompat.requestPermissions((Activity) getContext(),
+                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                    202);*/
+
+//            Toast.makeText(getActivity(), "permission grand", Toast.LENGTH_SHORT).show();
+//            Intent i = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + BuildConfig.APPLICATION_ID));
+//            startActivity(i);
+//
+
+        }
+
+        if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA)
+                == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private void showDialogImageUpload() {
+        mBottomSheetDialog = new BottomSheetDialog(DisplayPersonlActivity.this);
+        View sheetView = getLayoutInflater().inflate(R.layout.dialog_camera_gallery, null);
+        mBottomSheetDialog.setContentView(sheetView);
+        mBottomSheetDialog.show();
+        mBottomSheetDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialogInterface) {
+                mBottomSheetDialog.dismiss();
+            }
+        });
+
+        camera = (LinearLayout) sheetView.findViewById(R.id.camera);
+        gallery = (LinearLayout) sheetView.findViewById(R.id.gallery);
+
+
+        camera.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                final String state = Environment.getExternalStorageState();
+                if (Environment.MEDIA_MOUNTED.equals(state)) {
+                    camPicPath = getSavePicPath();
+                    openCamera(DisplayPersonlActivity.this, camPicPath);
+                }
+            }
+        });
+
+
+        gallery.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                final String state = Environment.getExternalStorageState();
+                if (Environment.MEDIA_MOUNTED.equals(state)) {
+                    openGallery();
+                }
+            }
+        });
+    }
+
+    public void openCamera(Context context, String camPicPath) {
+        Intent openCameraIntent = new Intent(
+                MediaStore.ACTION_IMAGE_CAPTURE);
+        Uri uri = FileProvider.getUriForFile(DisplayPersonlActivity.this,
+                BuildConfig.APPLICATION_ID + ".fileprovider",
+                new File(camPicPath));
+
+        openCameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
+        startActivityForResult(openCameraIntent,
+                FROM_CAMERA);
+
+    }
+
+    public void openGallery() {
+        Intent intent = new Intent();
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
+            intent.setAction(Intent.ACTION_GET_CONTENT);
+
+        } else {
+            intent.setAction(Intent.ACTION_OPEN_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+            intent.putExtra("crop", "true");
+            intent.putExtra("scale", "true");
+            intent.putExtra("scaleUpIfNeeded", true);
+        }
+        intent.setType("image/*");
+        startActivityForResult(intent,
+                FROM_GALLERY);
+
+
+    }
+
+    public String getSavePicPath() {
+        final String dir = FileSaveUtil.SD_CARD_PATH + "image_data/";
+        try {
+            FileSaveUtil.createSDDirectory(dir);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        String fileName = String.valueOf(System.currentTimeMillis() + ".png");
+        return dir + fileName;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (resultCode == RESULT_OK) {
+            switch (requestCode) {
+                case FROM_CAMERA:
+                    FileInputStream is = null;
+                    try {
+                        is = new FileInputStream(camPicPath);
+                        File camFile = new File(camPicPath);
+                        if (camFile.exists()) {
+                            picPath = camPicPath;
+                            PrefUtils.saveToPrefs(DisplayPersonlActivity.this, Config.PROFILE_PATH, picPath);
+                            Glide.with(DisplayPersonlActivity.this).load(camFile).into(profileUpload);
+                            filePathList.add(picPath);
+                            Toast.makeText(getApplicationContext(), "upload Image successfully", Toast.LENGTH_SHORT).show();
+                            String filename = picPath.substring(picPath.lastIndexOf("/") + 1);
+                            filechoose.setText(filename);
+                            mBottomSheetDialog.dismiss();
+
+                        }
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                    } finally {
+                        try {
+                            is.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    break;
+                case FROM_GALLERY:
+                    try {
+                        Uri content_describer = data.getData();
+                        path = FilePathUtil.getRealPath(getApplicationContext(), content_describer);
+                        filePathList.add(path);
+                        Toast.makeText(getApplicationContext(), "upload files successfully", Toast.LENGTH_SHORT).show();
+                        String filename = path.substring(path.lastIndexOf("/") + 1);
+                        filechoose.setText(filename);
+                        mBottomSheetDialog.dismiss();
+                        // Toast.makeText(getApplicationContext(), filename+"", Toast.LENGTH_SHORT).show();
+
+
+                    } catch (Exception e) {
+                    }
+                    break;
+            }
+        }
+    }
+
+    private void requestUploadSurvey(List<String> filePaths) {
+        String apikey = "26345dc063dd31b350432a6596c92e6e";
+        String action = "MyPersonal_task_update";
+        ApiService service = RegApiClient.getClient().create(ApiService.class);
+        MultipartBody.Builder builder = new MultipartBody.Builder();
+        builder.setType(MultipartBody.FORM);
+        Data data = new Data(user, ticketno, wait, approval, carboncopy, mark, email_msg, groupid);
+        PersonalDataRequest personalDataRequest = new PersonalDataRequest(apikey, action, data);
+        Gson gson = new Gson();
+        String json = gson.toJson(personalDataRequest);
+        builder.addFormDataPart("data", json);
+        for (int i = 0; i < filePaths.size(); i++) {
+            File file = new File(filePaths.get(i));
+            builder.addFormDataPart("file[]", timestamp + "_" + file.getName(), RequestBody.create(MediaType.parse("multipart/form-data"), file));
+        }
+
+        MultipartBody build = builder.build();
+        retrofit2.Call<ResponseBody> call = service.uploadFile(build);
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(retrofit2.Call<ResponseBody> call, Response<ResponseBody> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(DisplayPersonlActivity.this, "#" + ticketno + "Has been updated", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(getApplicationContext(), BaseActivity.class);
+                    startActivity(intent);
+                    finish();
+
+                }
+            }
+
+            @Override
+            public void onFailure(retrofit2.Call<ResponseBody> call, Throwable t) {
+                t.printStackTrace();
+                if (t instanceof Exception) {
+                    Toast.makeText(getApplicationContext(), "Service error from server 401", Toast.LENGTH_SHORT).show();
+
+                } else {
+                    Toast.makeText(getApplicationContext(), "Internet connection problem,Please try again", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+}
+
+

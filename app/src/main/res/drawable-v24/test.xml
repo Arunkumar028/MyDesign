@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:top="00dp"
+        android:bottom="-00dp"
+        android:left="300dp"
+        android:right="-300dp">
+        <rotate
+            android:fromDegrees="-40"
+            android:pivotX="-100%"
+            android:pivotY="100%">
+            <shape
+                android:shape="rectangle">
+                <solid
+                    android:color="#FFEB3B"/>
+            </shape>
+        </rotate>
+
+    </item>
+    <!--<item android:top="600dp"-->
+        <!--android:bottom="-325dp"-->
+
+        <!--android:left="-150dp"-->
+        <!--android:right="-00dp">-->
+        <!--<rotate-->
+            <!--android:fromDegrees="-50"-->
+            <!--android:pivotX="-0%"-->
+            <!--android:pivotY="105%">-->
+            <!--<shape-->
+                <!--android:shape="oval">-->
+                <!--<solid-->
+                    <!--android:color="#000"/>-->
+            <!--</shape>-->
+        <!--</rotate>-->
+    <!--</item>-->
+    <!--<item android:top="600dp"-->
+        <!--android:bottom="-325dp"-->
+
+        <!--android:left="-100dp"-->
+        <!--android:right="-00dp">-->
+        <!--<rotate-->
+            <!--android:fromDegrees="-50"-->
+            <!--android:pivotX="-10%"-->
+            <!--android:pivotY="120%">-->
+            <!--<shape-->
+                <!--android:shape="oval">-->
+                <!--<solid-->
+                    <!--android:color="#FFEB3B"/>-->
+            <!--</shape>-->
+        <!--</rotate>-->
+    <!--</item>-->
+</layer-list>

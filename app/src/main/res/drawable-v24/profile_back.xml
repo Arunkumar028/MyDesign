@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+
+    <!--<item android:top="-100dp"-->
+        <!--android:bottom="250dp"-->
+        <!--android:left="80dp"-->
+        <!--android:right="-300dp">-->
+        <!--<rotate-->
+            <!--android:fromDegrees=""-->
+            <!--android:pivotX="50%"-->
+            <!--android:pivotY="100%">-->
+            <!--<shape-->
+                <!--android:shape="oval">-->
+                <!--<solid-->
+                    <!--android:color="@color/colorAccent"/>-->
+            <!--</shape>-->
+        <!--</rotate>-->
+    <!--</item>-->
+
+
+    <!--<item android:top="280dp"-->
+        <!--android:bottom="00dp"-->
+        <!--android:left="-100dp"-->
+        <!--android:right="100dp">-->
+        <!--<rotate-->
+            <!--android:fromDegrees="-50"-->
+            <!--android:toDegrees="20"-->
+            <!--android:pivotX="0%"-->
+            <!--android:pivotY="-10%">-->
+            <!--<shape-->
+                <!--android:shape="oval">-->
+                <!--<solid-->
+                    <!--android:color="@color/black"/>-->
+            <!--</shape>-->
+        <!--</rotate>-->
+    <!--</item>-->
+
+    <item android:top="-100dp"
+        android:bottom="160dp"
+        android:left="90dp"
+        android:right="-250dp">
+        <rotate
+            android:fromDegrees="-30"
+            android:toDegrees="0"
+            android:pivotX="-10%"
+            android:pivotY="100%">
+            <shape
+                android:shape="oval">
+                <solid
+                    android:color="#90DAD4F7"/>
+            </shape>
+        </rotate>
+    </item>
+
+   <item android:top="-130dp"
+       android:bottom="180dp"
+       android:left="90dp"
+       android:right="-250dp">
+      <rotate
+          android:fromDegrees="-30"
+          android:toDegrees="-20"
+          android:pivotX="-10%"
+          android:pivotY="100%">
+         <shape
+             android:shape="oval">
+            <solid
+                android:color="#643549B7"/>
+         </shape>
+      </rotate>
+   </item>
+
+
+   <item android:top="-150dp"
+       android:bottom="80dp"
+       android:left="150dp"
+       android:right="-500dp">
+      <rotate
+          android:fromDegrees="-48"
+          android:toDegrees="-10"
+          android:pivotX="-15%"
+          android:pivotY="100%">
+         <shape
+             android:shape="oval">
+            <solid
+                android:color="#643F51B5"/>
+         </shape>
+      </rotate>
+   </item>
+
+</layer-list>
